@@ -148,12 +148,12 @@ RUN --mount=type=cache,target=/root/.cache/ccache,sharing=locked \
       -DLLVM_TARGETS_TO_BUILD=Native \
       -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;lld;lldb;polly" \
       -DLLVM_ENABLE_RUNTIMES="compiler-rt;libcxx;libcxxabi" \
+      -DLLVM_ENABLE_LIBCXX=ON \
+      -DLLVM_ENABLE_LLD=ON \
       -DLLVM_ENABLE_ZLIB=FORCE_ON \
       -DLLVM_BUILD_LLVM_DYLIB=ON \
       -DLLVM_LINK_LLVM_DYLIB=ON \
       -DLLVM_INSTALL_TOOLCHAIN_ONLY=ON \
-      -DLIBCXX_USE_COMPILER_RT=YES \
-      -DLIBCXXABI_USE_COMPILER_RT=YES \
       ../llvm \
     && ninja-build \
     && ninja-build install
@@ -324,7 +324,10 @@ COPY misc/cargo-config.toml /root/.cargo/config
 
 RUN --mount=type=cache,target=/var/cache/yum,sharing=locked \
     yum install -y vim screen less \
-                   make gcc libcurl-devel
+                   make libcurl-devel devtoolset-10
+
+RUN echo 'source scl_source enable devtoolset-10' >> /root/.zshrc
+RUN echo 'source scl_source enable devtoolset-10' >> /root/.bashrc
 
 # Use dump-init as the default entry point.
 RUN if [[ "$(uname -m)" = @(x86_64|x64) ]]; then \
