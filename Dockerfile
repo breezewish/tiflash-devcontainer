@@ -303,27 +303,40 @@ RUN if [[ "$(uname -m)" = @(x86_64|x64) ]]; then \
 
 FROM centos-base
 
+ARG USERNAME=dev
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+
+RUN --mount=type=cache,target=/var/cache/yum,sharing=locked \
+    groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    && yum install -y sudo \
+    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME
+
+USER $USERNAME
+
 COPY --from=builder-git /git-artifacts /
 
 COPY --from=builder-zsh /zsh-artifacts /
-RUN { echo "/usr/local/bin/zsh" | tee -a /etc/shells ; } \
+RUN { echo "/usr/local/bin/zsh" | sudo tee -a /etc/shells ; } \
     && sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" \
-    && chsh -s /usr/local/bin/zsh \
-    && mkdir -p /root/.oh-my-zsh/custom/themes
-COPY misc/codespaces.zsh-theme /root/.oh-my-zsh/custom/themes/
-RUN { echo "DISABLE_AUTO_UPDATE=true" | tee -a /root/.zshrc ; } \
-    && { echo "DISABLE_UPDATE_PROMPT=true" | tee -a /root/.zshrc ; } \
-    && sed -i -e 's/ZSH_THEME=.*/ZSH_THEME="codespaces"/g' /root/.zshrc
+    && sudo chsh -s /usr/local/bin/zsh $USERNAME \
+    && mkdir -p /home/$USERNAME/.oh-my-zsh/custom/themes
+COPY --chown=$USERNAME misc/codespaces.zsh-theme /home/$USERNAME/.oh-my-zsh/custom/themes/
+RUN { echo "DISABLE_AUTO_UPDATE=true" | tee -a /home/$USERNAME/.zshrc ; } \
+    && { echo "DISABLE_UPDATE_PROMPT=true" | tee -a /home/$USERNAME/.zshrc ; } \
+    && sed -i -e 's/ZSH_THEME=.*/ZSH_THEME="codespaces"/g' /home/$USERNAME/.zshrc
 
 # Install Rust: No need to install a specific toolchain, because we will specify
 # it in rust-toolchain file.
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 # Override default Rust linkers. Cargo does not respect CC env variables at all.
-RUN mkdir -p /root/.cargo/
-COPY misc/cargo-config.toml /root/.cargo/config
+RUN mkdir -p /home/$USERNAME/.cargo/
+COPY --chown=$USERNAME misc/cargo-config.toml /home/$USERNAME/.cargo/config
 
 RUN --mount=type=cache,target=/var/cache/yum,sharing=locked \
-    yum install -y vim screen less \
+    sudo yum install -y vim screen less \
                    make gcc libcurl-devel
 
 # Use dump-init as the default entry point.
@@ -332,21 +345,21 @@ RUN if [[ "$(uname -m)" = @(x86_64|x64) ]]; then \
     elif [[ "$(uname -m)" = @(arm64|aarch64|armv8b|armv8l) ]]; then \
       PLATFORM=aarch64 ; \
     fi \
-    && wget -O /usr/local/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v1.2.5/dumb-init_1.2.5_${PLATFORM}
-RUN chmod +x /usr/local/bin/dumb-init
+    && sudo wget -O /usr/local/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v1.2.5/dumb-init_1.2.5_${PLATFORM}
+RUN sudo chmod +x /usr/local/bin/dumb-init
 
 COPY --from=builder-cmake /cmake-artifacts /usr/local/
 
 COPY --from=builder-llvm /llvm-artifacts /usr/local/
-RUN { echo "/usr/local/lib/$(uname -m)-unknown-linux-gnu" | tee /etc/ld.so.conf.d/llvm.conf ; } \
-    && ldconfig
+RUN { echo "/usr/local/lib/$(uname -m)-unknown-linux-gnu" | sudo tee /etc/ld.so.conf.d/llvm.conf ; } \
+    && sudo ldconfig
 
 COPY --from=builder-ccache /ccache-artifacts /
 
 COPY --from=builder-python /python-artifacts /
 
 COPY --from=builder-ninja /ninja-src/ninja /usr/bin/ninja-build
-RUN ln -sf /usr/bin/ninja-build /usr/bin/ninja
+RUN sudo ln -sf /usr/bin/ninja-build /usr/bin/ninja
 
 COPY --from=builder-gh /gh-artifacts/bin/gh /usr/local/bin/gh
 
