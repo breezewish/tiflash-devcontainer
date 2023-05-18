@@ -225,10 +225,12 @@ RUN wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VER
 WORKDIR /python-src
 
 RUN --mount=type=cache,target=/var/cache/yum,sharing=locked \
-    yum install -y zlib-devel bzip2 bzip2-devel readline-devel openssl-devel tk-devel \
+    yum install -y zlib-devel bzip2 bzip2-devel readline-devel openssl11 openssl11-devel tk-devel \
                    libffi-devel xz-devel gdbm-devel ncurses-devel db4-devel
 
 RUN NPROC=${NPROC:-$(nproc || grep -c ^processor /proc/cpuinfo)} \
+    && export CFLAGS=$(pkg-config --cflags openssl11) \
+    && export LDFLAGS=$(pkg-config --libs openssl11) \
     && ./configure --prefix=/usr/local \
                    --disable-test-modules \
                    --with-openssl \
