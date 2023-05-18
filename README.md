@@ -15,9 +15,14 @@ This repository is the source of the Docker image [breezewish/tiflash-dev](https
 - Ninja-build 1.11.1
 - GitHub CLI 2.17.0
 - Rustup (latest)
+- MySQL client 5.5 (bundled by CentOS 7)
+- mycli (latest)
+- minio 20230504
+- tiup (latest)
+- go-tpc (latest)
 
 ## Roadmap
 
 - [x] x86_64
 - [ ] ARM64
-- [ ] GitHub Action to build and release image
+- [x] GitHub Action to build and release image

@@ -231,7 +231,7 @@ RUN --mount=type=cache,target=/var/cache/yum,sharing=locked \
 RUN NPROC=${NPROC:-$(nproc || grep -c ^processor /proc/cpuinfo)} \
     && ./configure --prefix=/usr/local \
                    --disable-test-modules \
-                   --with-ensurepip=no \
+                   --with-openssl \
     && make -s -j ${NPROC} LDFLAGS="-Wl,--strip-all" \
     && make install DESTDIR=/python-artifacts
 
@@ -324,9 +324,7 @@ RUN { echo "/usr/local/bin/zsh" | sudo tee -a /etc/shells ; } \
     && sudo chsh -s /usr/local/bin/zsh $USERNAME \
     && mkdir -p /home/$USERNAME/.oh-my-zsh/custom/themes
 COPY --chown=$USERNAME misc/codespaces.zsh-theme /home/$USERNAME/.oh-my-zsh/custom/themes/
-RUN { echo "DISABLE_AUTO_UPDATE=true" | tee -a /home/$USERNAME/.zshrc ; } \
-    && { echo "DISABLE_UPDATE_PROMPT=true" | tee -a /home/$USERNAME/.zshrc ; } \
-    && sed -i -e 's/ZSH_THEME=.*/ZSH_THEME="codespaces"/g' /home/$USERNAME/.zshrc
+COPY --chown=$USERNAME misc/.zshrc /home/$USERNAME/.zshrc
 
 # Install Rust: No need to install a specific toolchain, because we will specify
 # it in rust-toolchain file.
@@ -337,7 +335,7 @@ COPY --chown=$USERNAME misc/cargo-config.toml /home/$USERNAME/.cargo/config
 
 RUN --mount=type=cache,target=/var/cache/yum,sharing=locked \
     sudo yum install -y vim screen less \
-                   make gcc libcurl-devel
+                   make gcc libcurl-devel mysql
 
 # Use dump-init as the default entry point.
 RUN if [[ "$(uname -m)" = @(x86_64|x64) ]]; then \
@@ -357,11 +355,24 @@ RUN { echo "/usr/local/lib/$(uname -m)-unknown-linux-gnu" | sudo tee /etc/ld.so.
 COPY --from=builder-ccache /ccache-artifacts /
 
 COPY --from=builder-python /python-artifacts /
+RUN python3 -m ensurepip --upgrade
+# TODO: Install mycli
 
 COPY --from=builder-ninja /ninja-src/ninja /usr/bin/ninja-build
 RUN sudo ln -sf /usr/bin/ninja-build /usr/bin/ninja
 
 COPY --from=builder-gh /gh-artifacts/bin/gh /usr/local/bin/gh
+
+# Install minio
+RUN wget https://dl.min.io/server/minio/release/linux-amd64/archive/minio-20230504214430.0.0.x86_64.rpm -O minio.rpm \
+    && sudo yum install -y minio.rpm \
+    && rm minio.rpm
+
+# Install TiUP
+RUN curl --proto '=https' --tlsv1.2 -sSf https://tiup-mirrors.pingcap.com/install.sh | sh
+
+# Install go-tpc
+RUN curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/pingcap/go-tpc/master/install.sh | sh
 
 # TODO: Add other handy tools like rg fd fzf
 

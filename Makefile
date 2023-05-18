@@ -1,4 +1,4 @@
-BUILD_TAG := breezewish/tiflash-dev:0.0.3
+BUILD_TAG := breezewish/tiflash-dev:latest
 
 .PHONY: build
 build:
