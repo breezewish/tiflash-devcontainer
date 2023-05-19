@@ -4,7 +4,16 @@ phases:
   install:
     runtime-versions:
       docker: 20
+    commands:
+      - docker version
+      - curl -JLO https://github.com/docker/buildx/releases/download/v0.10.4/buildx-v0.10.4.linux-amd64
+      - mkdir -p ~/.docker/cli-plugins
+      - mv buildx-v0.10.4.linux-amd64 ~/.docker/cli-plugins/docker-buildx
+      - chmod a+rx ~/.docker/cli-plugins/docker-buildx
   build:
     commands:
-      - docker buildx create --use
-      - docker buildx build .
+      - docker buildx create --use --driver=docker-container
+      - |
+        docker buildx build . \
+          --cache-from type=s3,bucket=wenxuan-tiflash-devcontainer-cache,region=us-east-1,name=codebuild
+          --cache-to type=s3,bucket=wenxuan-tiflash-devcontainer-cache,region=us-east-1,name=codebuild,mode=max
