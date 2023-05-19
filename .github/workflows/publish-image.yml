@@ -10,12 +10,22 @@ on:
     branches:
       - "main"
 
+permissions:
+  id-token: write # JWT tokens for S3 OIDC
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::178851224597:role/GitHubActionFullAccessDevContainerCacheS3
+          aws-region: us-east-1
+          role-duration-seconds: 21600
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v4
@@ -39,6 +49,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: |
-            type=gha,scope=${{ github.ref_name }}
-            type=gha,scope=main
-          cache-to: type=gha,mode=max,scope=${{ github.ref_name }}
+            type=s3,bucket=wenxuan-tiflash-devcontainer-cache,region=us-east-1,name=gha-${{ github.ref_name }}
+            type=s3,bucket=wenxuan-tiflash-devcontainer-cache,region=us-east-1,name=gha-main
+          cache-to: type=s3,bucket=wenxuan-tiflash-devcontainer-cache,region=us-east-1,name=gha-${{ github.ref_name }},mode=max
