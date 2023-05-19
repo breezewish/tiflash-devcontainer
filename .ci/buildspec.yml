@@ -15,5 +15,5 @@ phases:
       - docker buildx create --use --driver=docker-container
       - |
         docker buildx build --target builder-python . \
-          --cache-from type=s3,bucket=wenxuan-tiflash-devcontainer-cache,region=us-east-1,name=codebuild
+          --cache-from type=s3,bucket=wenxuan-tiflash-devcontainer-cache,region=us-east-1,name=codebuild \
           --cache-to type=s3,bucket=wenxuan-tiflash-devcontainer-cache,region=us-east-1,name=codebuild,mode=max
