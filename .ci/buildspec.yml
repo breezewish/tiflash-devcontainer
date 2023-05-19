@@ -1,0 +1,11 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      docker: 18
+  pre_build:
+  build:
+    commands:
+      - docker buildx create --use
+      - docker buildx build .
