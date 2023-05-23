@@ -226,8 +226,8 @@ WORKDIR /python-src
 
 RUN --mount=type=cache,target=/var/cache/yum,sharing=locked \
     yum install -y zlib-devel bzip2 bzip2-devel readline-devel \
-                   openssl openssl-devel openssl11 openssl11-devel tk-devel \
-                   libffi-devel xz-devel gdbm-devel ncurses-devel db4-devel
+                   openssl openssl-devel openssl11 openssl11-devel openssl11-static \
+                   tk-devel libffi-devel xz-devel gdbm-devel ncurses-devel db4-devel
 
 # Static-link OpenSSL, see https://github.com/python/cpython/commit/bacefbf41461ab703b8d561f0e3d766427eab367
 ENV PY_UNSUPPORTED_OPENSSL_BUILD=static
