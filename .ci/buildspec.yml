@@ -12,8 +12,4 @@ phases:
       - chmod a+rx ~/.docker/cli-plugins/docker-buildx
   build:
     commands:
-      - docker buildx create --use --driver=docker-container
-      - |
-        docker buildx build . \
-          --cache-from type=s3,bucket=wenxuan-tiflash-devcontainer-cache,region=us-east-1,name=codebuild \
-          --cache-to type=s3,bucket=wenxuan-tiflash-devcontainer-cache,region=us-east-1,name=codebuild,mode=max
+      - aws s3 ls s3://wenxuan-tiflash-devcontainer-cache
