@@ -344,7 +344,10 @@ COPY --chown=$USERNAME misc/cargo-config.toml /home/$USERNAME/.cargo/config
 
 RUN --mount=type=cache,target=/var/cache/yum,sharing=locked \
     sudo yum install -y vim screen less \
-                   make gcc libcurl-devel mysql
+                        make gcc libcurl-devel mysql
+
+# Default MySQL & Mycli config files
+COPY --chown=$USERNAME misc/.my.cnf /home/$USERNAME/.my.cnf
 
 # Use dump-init as the default entry point.
 RUN if [[ "$(uname -m)" = @(x86_64|x64) ]]; then \
@@ -364,8 +367,9 @@ RUN { echo "/usr/local/lib/$(uname -m)-unknown-linux-gnu" | sudo tee /etc/ld.so.
 COPY --from=builder-ccache /ccache-artifacts /
 
 COPY --from=builder-python /python-artifacts /
-RUN python3 -m ensurepip --upgrade
-# TODO: Install mycli
+RUN python3 -m ensurepip --upgrade \
+    && python3 -m pip install -U mycli \
+    && rm -rf /home/$USERNAME/.cache/pip
 
 COPY --from=builder-ninja /ninja-src/ninja /usr/bin/ninja-build
 RUN sudo ln -sf /usr/bin/ninja-build /usr/bin/ninja
@@ -373,9 +377,9 @@ RUN sudo ln -sf /usr/bin/ninja-build /usr/bin/ninja
 COPY --from=builder-gh /gh-artifacts/bin/gh /usr/local/bin/gh
 
 # Install minio
-RUN wget https://dl.min.io/server/minio/release/linux-amd64/archive/minio-20230504214430.0.0.x86_64.rpm -O minio.rpm \
-    && sudo yum install -y minio.rpm \
-    && rm minio.rpm
+RUN wget https://dl.min.io/server/minio/release/linux-amd64/archive/minio-20230504214430.0.0.x86_64.rpm -O /home/$USERNAME/minio.rpm \
+    && sudo yum install -y /home/$USERNAME/minio.rpm \
+    && rm /home/$USERNAME/minio.rpm
 
 # Install TiUP
 RUN curl --proto '=https' --tlsv1.2 -sSf https://tiup-mirrors.pingcap.com/install.sh | sh
