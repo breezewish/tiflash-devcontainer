@@ -12,4 +12,6 @@ phases:
       - chmod a+rx ~/.docker/cli-plugins/docker-buildx
   build:
     commands:
-      - codebuild-breakpoint
+      - aws s3 ls
+      - sleep 65m
+      - aws s3 ls
