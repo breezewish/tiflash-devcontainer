@@ -232,11 +232,15 @@ RUN --mount=type=cache,target=/var/cache/yum,sharing=locked \
 # Static-link OpenSSL, see https://github.com/python/cpython/commit/bacefbf41461ab703b8d561f0e3d766427eab367
 ENV PY_UNSUPPORTED_OPENSSL_BUILD=static
 
+RUN mkdir -p /opt/openssl111/include/openssl \
+    && cp /usr/include/openssl11/openssl/* /opt/openssl111/include/openssl/ \
+    && mkdir -p /opt/openssl111/lib \
+    && cp /usr/lib64/openssl11/* /opt/openssl111/lib/
+
 RUN NPROC=${NPROC:-$(nproc || grep -c ^processor /proc/cpuinfo)} \
-    && export CFLAGS=$(pkg-config --cflags openssl11) \
-    && export LDFLAGS=$(pkg-config --libs openssl11) \
     && ./configure --prefix=/usr/local \
                    --disable-test-modules \
+                   --with-openssl=/opt/openssl111/ \
     && make -s -j ${NPROC} LDFLAGS="-Wl,--strip-all" \
     && make install DESTDIR=/python-artifacts
 
