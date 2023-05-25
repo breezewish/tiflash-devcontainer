@@ -12,6 +12,6 @@ phases:
       - chmod a+rx ~/.docker/cli-plugins/docker-buildx
   build:
     commands:
-      - aws s3 ls
+      - aws s3 ls s3://wenxuan-tiflash-devcontainer-cache
       - sleep 65m
-      - aws s3 ls
+      - aws s3 ls s3://wenxuan-tiflash-devcontainer-cache
