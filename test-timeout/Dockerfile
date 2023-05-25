@@ -34,7 +34,7 @@ RUN if [ "$USE_CN_MIRROR" = "1" ] ; then \
         -i /etc/yum.repos.d/epel*.repo; \
     fi
 
-RUN sleep 65m
+RUN sleep 20m
 
 RUN --mount=type=cache,target=/var/cache/yum,sharing=locked \
     yum install -y curl wget \
